@@ -4,11 +4,14 @@ public class CountFeeling {
     private Long negatif;
     private Long positif;
     private Long neutre;
+    private int test;
+
 
     public CountFeeling() {
         this.negatif = 0L;
         this.positif = 0L;
         this.neutre = 0L;
+
     }
 
     public void addNegatif(){
