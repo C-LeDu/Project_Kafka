@@ -21,6 +21,16 @@ public class CountFeeling {
         this.neutre += 1;
     }
 
+    public void addNegatif(long add){
+        this.negatif += add;
+    }
+    public void addPosiftif(long add){
+        this.positif += add;
+    }
+    public void addNeutre(long add){
+        this.neutre += add;
+    }
+
 
 
     public Long getNegatif() {

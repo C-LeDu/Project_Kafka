@@ -3,7 +3,7 @@ package eu.nyuu.courses;
 import edu.stanford.nlp.simple.Sentence;
 import eu.nyuu.courses.model.CountFeeling;
 import eu.nyuu.courses.model.FeelingEvent;
-import eu.nyuu.courses.model.TweetEvent;
+import eu.nyuu.courses.model.TwitterEvent;
 import eu.nyuu.courses.serdes.SerdeFactory;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
@@ -38,7 +38,7 @@ public class CalculTraitement {
 
         final Serde<String> stringSerde = Serdes.String();
         final Map<String, Object> serdeProps = new HashMap<>();
-        final Serde<TweetEvent> tweetEventSerde = SerdeFactory.createSerde(TweetEvent.class, serdeProps);
+        final Serde<TwitterEvent> tweetEventSerde = SerdeFactory.createSerde(TwitterEvent.class, serdeProps);
         final Serde<FeelingEvent> feelingEventSerde = SerdeFactory.createSerde(FeelingEvent.class, serdeProps);
 
         // Stream
@@ -46,14 +46,14 @@ public class CalculTraitement {
 
         // Here you go :)
 
-        final KStream<String, TweetEvent> tweetsStream = builder
+        final KStream<String, TwitterEvent> tweetsStream = builder
                 .stream("tweets", Consumed.with(stringSerde, tweetEventSerde));
 
         KStream<String, FeelingEvent> stringFeelingEventKStream = tweetsStream
                 .peek((s, feelingEvent) -> System.out.println(feelingEvent))
-                .mapValues((s, tweetEvent) -> {
-                    String feeling = new Sentence(tweetEvent.getBody()).sentiment().toString();
-                    return new FeelingEvent(tweetEvent, feeling);
+                .mapValues((s, twitterEvent) -> {
+                    String feeling = new Sentence(twitterEvent.getBody()).sentiment().toString();
+                    return new FeelingEvent(twitterEvent, feeling);
                 });
 
         // PUSH COUNT FEELING BY USER
@@ -107,13 +107,13 @@ public class CalculTraitement {
                             return countFeeling;
                         }, Materialized.as("larcher_ledu_gauriat_year_distribution_feeling"));
 
-        KStream<String, TweetEvent> hashTweetEventKStream = tweetsStream
-                .flatMap((s, tweetEvent) -> {
-                    List<KeyValue<String, TweetEvent>> result = new LinkedList<>();
+        KStream<String, TwitterEvent> hashTweetEventKStream = tweetsStream
+                .flatMap((s, twitterEvent) -> {
+                    List<KeyValue<String, TwitterEvent>> result = new LinkedList<>();
                     Matcher m = Pattern.compile("(?:\\s|\\A)[##]+[A-Za-z0-9-_]+")
-                            .matcher(tweetEvent.getBody());
+                            .matcher(twitterEvent.getBody());
                     while (m.find()) {
-                        result.add(new KeyValue<String, TweetEvent>(m.group(), tweetEvent));
+                        result.add(new KeyValue<String, TwitterEvent>(m.group(), twitterEvent));
                     }
                     return result;
                 });

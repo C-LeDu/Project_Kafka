@@ -1,9 +1,9 @@
 package eu.nyuu.courses.model;
 
-public class FeelingEvent extends TweetEvent {
+public class FeelingEvent extends TwitterEvent {
     private String feeling;
 
-    public FeelingEvent(TweetEvent tweetEvent, String feeling) {
+    public FeelingEvent(TwitterEvent twitterEvent, String feeling) {
         super();
         this.feeling = feeling;
     }

@@ -1,6 +1,6 @@
 package eu.nyuu.courses.model;
 
-public class TweetEvent {
+public class TwitterEvent {
     protected String id;
     protected String timestamp;
     protected String nick;
