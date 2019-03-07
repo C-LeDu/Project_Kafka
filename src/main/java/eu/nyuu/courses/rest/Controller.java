@@ -33,10 +33,6 @@ import java.util.stream.Collectors;
 @RestController
 public class Controller {
     private final KafkaStreams streams;
-    private final Serde<FeelingEvent> feelingEventSerde;
-    private final Serde<TwitterEvent> twitterEventSerde;
-    private final Serde<CountFeeling> countFeelingSerde;
-    final Serde<String> stringSerde;
 
     public Controller() {
         final String bootstrapServers = "51.15.90.153:9092";
@@ -52,11 +48,11 @@ public class Controller {
         streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
 
-        stringSerde = Serdes.String();
+        Serde<String> stringSerde = Serdes.String();
         final Map<String, Object> serdeProps = new HashMap<>();
-        twitterEventSerde = SerdeFactory.createSerde(TwitterEvent.class, serdeProps);
-        feelingEventSerde = SerdeFactory.createSerde(FeelingEvent.class, serdeProps);
-        countFeelingSerde = SerdeFactory.createSerde(CountFeeling.class, serdeProps);
+        Serde<TwitterEvent> twitterEventSerde = SerdeFactory.createSerde(TwitterEvent.class, serdeProps);
+        Serde<FeelingEvent> feelingEventSerde = SerdeFactory.createSerde(FeelingEvent.class, serdeProps);
+        Serde<CountFeeling> countFeelingSerde = SerdeFactory.createSerde(CountFeeling.class, serdeProps);
 
         final StreamsBuilder builder = new StreamsBuilder();
 
@@ -118,7 +114,7 @@ public class Controller {
         KStream<String, TwitterEvent> hashtwitterEventKStream = twittersStream
                 .flatMap((s, twitterEvent) -> {
                     List<KeyValue<String, TwitterEvent>> result = new LinkedList<>();
-                    Matcher m = Pattern.compile("(?:\\s|\\A)[##]+[A-Za-z0-9-_]+")
+                    Matcher m = Pattern.compile("(?:\\s|\\A)[#]+[A-Za-z0-9-_]+")
                             .matcher(twitterEvent.getBody());
                     while (m.find()) {
                         result.add(new KeyValue<String, TwitterEvent>(m.group(), twitterEvent));

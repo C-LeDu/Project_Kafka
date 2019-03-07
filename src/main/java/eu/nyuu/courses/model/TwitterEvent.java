@@ -6,6 +6,20 @@ public class TwitterEvent {
     protected String nick;
     protected String body;
 
+    public TwitterEvent() {
+        this.id = "";
+        this.timestamp = "";
+        this.nick = "";
+        this.body = "";
+    }
+
+    public TwitterEvent(TwitterEvent copy) {
+        this.id = copy.id;
+        this.timestamp = copy.timestamp;
+        this.nick = copy.nick;
+        this.body = copy.body;
+    }
+
     public String getId() {
         return id;
     }

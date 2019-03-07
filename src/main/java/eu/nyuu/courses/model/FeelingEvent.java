@@ -4,7 +4,7 @@ public class FeelingEvent extends TwitterEvent {
     private String feeling;
 
     public FeelingEvent(TwitterEvent twitterEvent, String feeling) {
-        super();
+        super(twitterEvent);
         this.feeling = feeling;
     }
 
