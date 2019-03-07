@@ -8,9 +8,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class RunSpingBoot {
 
     public static void main(final String[] args) {
-
         SpringApplication.run(RunSpingBoot.class, args);
-
-
     }
 }

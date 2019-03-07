@@ -135,8 +135,6 @@ public class CalculTraitement {
 
         // Add shutdown hook to respond to SIGTERM and gracefully close Kafka Streams
         Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
-
-
     }
 
     private static void addFeeling(FeelingEvent feelingEvent, CountFeeling countFeeling) {
