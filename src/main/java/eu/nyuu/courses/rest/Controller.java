@@ -19,12 +19,14 @@ import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyWindowStore;
 import org.apache.kafka.streams.state.WindowStore;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,7 +45,7 @@ public class Controller {
         // Where to find Kafka broker(s).
         streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-        streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, "C:\\Users\\Chaah\\Documents\\tmp2");
+        streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, "F:\\Kafka\\tmp");
         // Specify default (de)serializers for record keys and for record values.
         streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
@@ -142,13 +144,52 @@ public class Controller {
         Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
     }
 
-    @GetMapping("/day")
-    public CountFeeling getDay(@RequestParam(name = "date", defaultValue = "") @DateTimeFormat(pattern="MMddyyyy") LocalDate date){
+    @GetMapping("/user")
+    public CountFeeling getUser(@RequestParam(name = "date", defaultValue = "") @DateTimeFormat(pattern="dd-MM-yyyy") LocalDate date, @RequestParam(name = "name") String name){
         if (streams.state() != KafkaStreams.State.RUNNING)
             return null;
         ReadOnlyWindowStore<String, CountFeeling> windowStore = streams.store("larcher_ledu_gauriat_day_distribution_feeling", QueryableStoreTypes.windowStore());
         Instant start = date == null ? LocalDateTime.now().toInstant(ZoneOffset.UTC): date.plusDays(1L).atStartOfDay().toInstant(ZoneOffset.UTC);
         Instant end = start.minus(Duration.ofDays(1));
+
+        return getCountFeeling(windowStore, start, end, name);
+    }
+
+    @GetMapping("/day")
+    public CountFeeling getDay(@RequestParam(name = "date", defaultValue = "") @DateTimeFormat(pattern="dd-MM-yyyy") LocalDate date){
+        if (streams.state() != KafkaStreams.State.RUNNING)
+            return null;
+        ReadOnlyWindowStore<String, CountFeeling> windowStore = streams.store("larcher_ledu_gauriat_day_distribution_feeling", QueryableStoreTypes.windowStore());
+        Instant start = date == null ? LocalDateTime.now().toInstant(ZoneOffset.UTC): date.plusDays(1L).atStartOfDay().toInstant(ZoneOffset.UTC);
+        Instant end = start.minus(Duration.ofDays(1));
+
+        return getCountFeeling(windowStore, start, end);
+    }
+
+    @GetMapping("/month")
+    public CountFeeling getMonth(@RequestParam(name = "date", defaultValue = "03-2019") String date){
+        if (streams.state() != KafkaStreams.State.RUNNING)
+            return null;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-yyyy");
+        YearMonth ym = YearMonth.parse(date, formatter);
+        ReadOnlyWindowStore<String, CountFeeling> windowStore = streams.store("larcher_ledu_gauriat_month_distribution_feeling", QueryableStoreTypes.windowStore());
+        Instant end = Strings.isBlank(date)? Instant.now() : ym.atDay(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+        Instant start = end.plus(Duration.ofDays(30));
+
+        return getCountFeeling(windowStore, start, end);
+    }
+
+    @GetMapping("/year")
+    public CountFeeling getYear(@RequestParam(name = "date", defaultValue = "2019") String date){
+        if (streams.state() != KafkaStreams.State.RUNNING)
+            return null;
+        if(Strings.isNotBlank(date))
+            date = "01-" + date;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-yyyy");
+        YearMonth ym = YearMonth.parse(date, formatter);
+        ReadOnlyWindowStore<String, CountFeeling> windowStore = streams.store("larcher_ledu_gauriat_month_distribution_feeling", QueryableStoreTypes.windowStore());
+        Instant end = Strings.isBlank(date)? Instant.now() : ym.atDay(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+        Instant start = end.plus(Duration.ofDays(365));
 
         return getCountFeeling(windowStore, start, end);
     }
@@ -203,7 +244,22 @@ public class Controller {
         return result;
     }
 
-    private static void addFeeling(FeelingEvent feelingEvent, CountFeeling countFeeling) {
+    private CountFeeling getCountFeeling(ReadOnlyWindowStore<String, CountFeeling> windowStore, Instant startDuration, Instant endDuration, String name) {
+        KeyValueIterator<Windowed<String>, CountFeeling> iterator = windowStore.fetchAll(endDuration, startDuration);
+        CountFeeling result = new CountFeeling();
+        while (iterator.hasNext()) {
+            KeyValue<Windowed<String>, CountFeeling> next = iterator.next();
+            if (next.key.equals(name)) {
+                result.addPosiftif(next.value.getPositif());
+                result.addNegatif(next.value.getNegatif());
+                result.addNeutre(next.value.getNeutre());
+
+            }
+        }
+        return result;
+    }
+
+        private static void addFeeling(FeelingEvent feelingEvent, CountFeeling countFeeling) {
         switch (feelingEvent.getFeeling()) {
             case "NEGATIVE":
             case "VERY_NEGATIVE":

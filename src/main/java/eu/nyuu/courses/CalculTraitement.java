@@ -31,7 +31,7 @@ public class CalculTraitement {
         // Where to find Kafka broker(s).
         streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         streamsConfiguration.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-        streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, "C:\\Users\\Chaah\\Documents\\tmp");
+        streamsConfiguration.put(StreamsConfig.STATE_DIR_CONFIG, "F:\\Kafka\\tmp");
         // Specify default (de)serializers for record keys and for record values.
         streamsConfiguration.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
         streamsConfiguration.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
