@@ -38,7 +38,7 @@ public class Controller {
         final String bootstrapServers = "51.15.90.153:9092";
         final Properties streamsConfiguration = new Properties();
 
-        streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "larcher-ledu-gauriat-stream-app");
+        streamsConfiguration.put(StreamsConfig.APPLICATION_ID_CONFIG, "larcher-ledu-gauriat-api-stream-app");
         streamsConfiguration.put(StreamsConfig.CLIENT_ID_CONFIG, "larcher-ledu-gauriat-api-stream-app-client");
         // Where to find Kafka broker(s).
         streamsConfiguration.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -57,7 +57,7 @@ public class Controller {
         final StreamsBuilder builder = new StreamsBuilder();
 
         final KStream<String, TwitterEvent> twittersStream = builder
-                .stream("twitters", Consumed.with(stringSerde, twitterEventSerde));
+                .stream("tweets", Consumed.with(stringSerde, twitterEventSerde));
 
         KStream<String, FeelingEvent> stringFeelingEventKStream = twittersStream
                 .peek((s, feelingEvent) -> System.out.println(feelingEvent))
@@ -70,12 +70,13 @@ public class Controller {
         stringFeelingEventKStream
                 .map((s, feelingEvent) ->  KeyValue.pair(feelingEvent.getNick(), feelingEvent))
                 .groupByKey(Grouped.with(stringSerde, feelingEventSerde))
-                .windowedBy(TimeWindows.of(Duration.ofMinutes(1L)))
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(10L)))
                 .aggregate(CountFeeling::new,
                         (s, feelingEvent, countFeeling) -> {
                             addFeeling(feelingEvent, countFeeling);
                             return countFeeling;
-                        }, Materialized.<String, CountFeeling, WindowStore<Bytes, byte[]>>as("larcher_ledu_gauriat_user_distribution_feeling").withValueSerde(countFeelingSerde).withKeySerde(stringSerde));
+                        }, Materialized.<String, CountFeeling, WindowStore<Bytes, byte[]>>as("larcher_ledu_gauriat_user_distribution_feeling").withValueSerde(countFeelingSerde).withKeySerde(stringSerde))
+                .toStream().print(Printed.toSysOut());
 
 
         // PUSH COUNT FEELING BY USER BY DAY
@@ -87,7 +88,8 @@ public class Controller {
                         (s, feelingEvent, countFeeling) -> {
                             addFeeling(feelingEvent, countFeeling);
                             return countFeeling;
-                        }, Materialized.<String, CountFeeling, WindowStore<Bytes, byte[]>>as("larcher_ledu_gauriat_day_distribution_feeling").withValueSerde(countFeelingSerde).withKeySerde(stringSerde));
+                        }, Materialized.<String, CountFeeling, WindowStore<Bytes, byte[]>>as("larcher_ledu_gauriat_day_distribution_feeling").withValueSerde(countFeelingSerde).withKeySerde(stringSerde))
+                ;
 
         // PUSH COUNT FEELING BY USER BY MONTH
         stringFeelingEventKStream
