@@ -1,4 +1,6 @@
-# My Stream App
+# Projet Kafka Stream et API
+
+Ce projet est une démonstration de l'utilisation de kafka stream.
 
 ## Comment l'utiliser
 
